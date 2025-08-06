@@ -63,11 +63,15 @@ async function main() {
     ];
 
     for (const business of businesses) {
-        await prisma.business.upsert({
-            where: { name: business.name },
-            update: {},
-            create: business,
+        const existing = await prisma.business.findFirst({
+            where: { name: business.name }
         });
+        
+        if (!existing) {
+            await prisma.business.create({
+                data: business
+            });
+        }
     }
 
     console.log('Seed data created successfully!');
