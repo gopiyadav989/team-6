@@ -5,6 +5,7 @@ export default function BusinessList({ user, token }) {
   const [businesses, setBusinesses] = useState([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchBusinesses()
@@ -12,6 +13,7 @@ export default function BusinessList({ user, token }) {
 
   const fetchBusinesses = async () => {
     try {
+      setLoading(true)
       const params = new URLSearchParams()
       if (search) params.append('search', search)
       if (category) params.append('category', category)
@@ -21,6 +23,8 @@ export default function BusinessList({ user, token }) {
       setBusinesses(data)
     } catch (error) {
       console.error('Error fetching businesses:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -51,8 +55,14 @@ export default function BusinessList({ user, token }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {businesses.map((business) => (
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600">Loading businesses...</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {businesses.map((business) => (
           <div key={business.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             <img
               src={business.imageUrl || 'https://via.placeholder.com/400x200'}
@@ -83,7 +93,8 @@ export default function BusinessList({ user, token }) {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

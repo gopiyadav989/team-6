@@ -5,6 +5,8 @@ export default function BusinessDetail({ user, token }) {
   const { id } = useParams()
   const [business, setBusiness] = useState(null)
   const [showReviewForm, setShowReviewForm] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [reviewForm, setReviewForm] = useState({
     content: '',
     qualityRating: 5,
@@ -19,11 +21,14 @@ export default function BusinessDetail({ user, token }) {
 
   const fetchBusiness = async () => {
     try {
+      setLoading(true)
       const response = await fetch(`http://localhost:3001/api/businesses/${id}`)
       const data = await response.json()
       setBusiness(data)
     } catch (error) {
       console.error('Error fetching business:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -32,6 +37,7 @@ export default function BusinessDetail({ user, token }) {
     if (!token) return
 
     try {
+      setSubmitting(true)
       const response = await fetch('http://localhost:3001/api/reviews', {
         method: 'POST',
         headers: {
@@ -57,10 +63,19 @@ export default function BusinessDetail({ user, token }) {
       }
     } catch (error) {
       console.error('Error submitting review:', error)
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  if (!business) return <div className="p-8">Loading...</div>
+  if (loading) return (
+    <div className="flex justify-center items-center py-12">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <span className="ml-3 text-gray-600">Loading business details...</span>
+    </div>
+  )
+
+  if (!business) return <div className="p-8 text-center text-gray-500">Business not found</div>
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -153,9 +168,13 @@ export default function BusinessDetail({ user, token }) {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                disabled={submitting}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
-                Submit Review
+                {submitting && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                )}
+                {submitting ? 'Submitting...' : 'Submit Review'}
               </button>
               <button
                 type="button"

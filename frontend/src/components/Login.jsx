@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 export default function Login({ setToken }) {
   const [isLogin, setIsLogin] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -14,6 +15,7 @@ export default function Login({ setToken }) {
     e.preventDefault()
     
     try {
+      setLoading(true)
       const endpoint = isLogin ? '/api/login' : '/api/register'
       const response = await fetch(`http://localhost:3001${endpoint}`, {
         method: 'POST',
@@ -35,6 +37,8 @@ export default function Login({ setToken }) {
     } catch (error) {
       console.error('Auth error:', error)
       alert('Authentication failed')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -85,9 +89,13 @@ export default function Login({ setToken }) {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLogin ? 'Sign in' : 'Sign up'}
+              {loading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              )}
+              {loading ? 'Processing...' : (isLogin ? 'Sign in' : 'Sign up')}
             </button>
           </div>
 

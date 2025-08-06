@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react'
 export default function AdminDashboard({ token }) {
   const [pendingReviews, setPendingReviews] = useState([])
   const [showAddBusiness, setShowAddBusiness] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [processingReview, setProcessingReview] = useState(null)
   const [businessForm, setBusinessForm] = useState({
     name: '',
     description: '',
@@ -17,6 +20,7 @@ export default function AdminDashboard({ token }) {
 
   const fetchPendingReviews = async () => {
     try {
+      setLoading(true)
       const response = await fetch('http://localhost:3001/api/admin/reviews', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -26,11 +30,14 @@ export default function AdminDashboard({ token }) {
       setPendingReviews(data)
     } catch (error) {
       console.error('Error fetching reviews:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleReviewAction = async (reviewId, status) => {
     try {
+      setProcessingReview(reviewId)
       const response = await fetch(`http://localhost:3001/api/admin/reviews/${reviewId}`, {
         method: 'PATCH',
         headers: {
@@ -45,12 +52,15 @@ export default function AdminDashboard({ token }) {
       }
     } catch (error) {
       console.error('Error updating review:', error)
+    } finally {
+      setProcessingReview(null)
     }
   }
 
   const addBusiness = async (e) => {
     e.preventDefault()
     try {
+      setSubmitting(true)
       const response = await fetch('http://localhost:3001/api/admin/businesses', {
         method: 'POST',
         headers: {
@@ -73,6 +83,8 @@ export default function AdminDashboard({ token }) {
       }
     } catch (error) {
       console.error('Error adding business:', error)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -155,9 +167,13 @@ export default function AdminDashboard({ token }) {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                disabled={submitting}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
-                Add Business
+                {submitting && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                )}
+                {submitting ? 'Adding...' : 'Add Business'}
               </button>
               <button
                 type="button"
@@ -176,7 +192,12 @@ export default function AdminDashboard({ token }) {
           <h2 className="text-xl font-semibold">Pending Reviews ({pendingReviews.length})</h2>
         </div>
         
-        {pendingReviews.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-600">Loading reviews...</span>
+          </div>
+        ) : pendingReviews.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             No pending reviews
           </div>
@@ -206,14 +227,22 @@ export default function AdminDashboard({ token }) {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleReviewAction(review.id, 'APPROVED')}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    disabled={processingReview === review.id}
+                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
+                    {processingReview === review.id && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    )}
                     Approve
                   </button>
                   <button
                     onClick={() => handleReviewAction(review.id, 'REJECTED')}
-                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                    disabled={processingReview === review.id}
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
+                    {processingReview === review.id && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    )}
                     Reject
                   </button>
                 </div>
